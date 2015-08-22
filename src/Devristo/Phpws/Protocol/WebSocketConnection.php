@@ -6,7 +6,7 @@ use Exception;
 use React\EventLoop\LoopInterface;
 use React\Socket\Connection;
 use Zend\Http\Request;
-use Zend\Log\LoggerInterface;
+use Psr\Log\LoggerInterface;
 
 class WebSocketConnection extends Connection
 {
@@ -19,14 +19,14 @@ class WebSocketConnection extends Connection
      *
      * @var WebSocketTransportInterface
      */
-    private $_transport = null;
-    private $_lastChanged = null;
+    private $transport = null;
+    private $lastChanged = null;
 
-    public function __construct($socket, LoopInterface $loop, $logger)
+    public function __construct($socket, LoopInterface $loop, LoggerInterface $logger)
     {
         parent::__construct($socket, $loop);
 
-        $this->_lastChanged = time();
+        $this->lastChanged = time();
         $this->logger = $logger;
     }
 
@@ -48,54 +48,54 @@ class WebSocketConnection extends Connection
     private function onData($data)
     {
         try {
-            $this->_lastChanged = time();
+            $this->lastChanged = time();
 
-            if ($this->_transport)
+            if ($this->transport)
                 $this->emit('data', array($data, $this));
             else
                 $this->establishConnection($data);
         } catch (Exception $e) {
-            $this->logger->err("Error while handling incoming data. Exception message is: ".$e->getMessage());
+            $this->logger->error("Error while handling incoming data. Exception message is: ".$e->getMessage());
             $this->close();
         }
     }
 
     public function setTransport(WebSocketTransportInterface $con)
     {
-        $this->_transport = $con;
+        $this->transport = $con;
     }
 
     public function establishConnection($data)
     {
-        $this->_transport = WebSocketTransportFactory::fromSocketData($this, $data, $this->logger);
+        $this->transport = WebSocketTransportFactory::fromSocketData($this, $data, $this->logger);
         $myself = $this;
 
-        $this->_transport->on("handshake", function(Handshake $request) use ($myself){
+        $this->transport->on("handshake", function(Handshake $request) use ($myself){
             $myself->emit("handshake", array($request));
         });
 
-        $this->_transport->on("connect", function() use ($myself){
+        $this->transport->on("connect", function() use ($myself){
             $myself->emit("connect", array($myself));
         });
 
-        $this->_transport->on("message", function($message) use($myself){
+        $this->transport->on("message", function($message) use($myself){
             $myself->emit("message", array("message" => $message));
         });
 
-        $this->_transport->on("flashXmlRequest", function($message) use($myself){
+        $this->transport->on("flashXmlRequest", function($message) use($myself){
             $myself->emit("flashXmlRequest");
         });
 
-        if ($this->_transport instanceof WebSocketTransportFlash)
+        if ($this->transport instanceof WebSocketTransportFlash)
             return;
 
         $request = Request::fromString($data);
-        $this->_transport->respondTo($request);
+        $this->transport->respondTo($request);
     }
 
     public function getLastChanged()
     {
-        return $this->_lastChanged;
+        return $this->lastChanged;
     }
 
     /**
@@ -104,7 +104,7 @@ class WebSocketConnection extends Connection
      */
     public function getTransport()
     {
-        return $this->_transport;
+        return $this->transport;
     }
 
     public function setLogger(LoggerInterface $logger)

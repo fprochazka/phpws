@@ -77,7 +77,7 @@ class WebSocketTransportHybi extends WebSocketTransport
                 $this->emit("connect");
             }
         } catch(Exception $e){
-            $this->logger->err("Connection error, message: ".$e->getMessage());
+            $this->logger->error("Connection error, message: ".$e->getMessage());
             $this->close();
         }
     }

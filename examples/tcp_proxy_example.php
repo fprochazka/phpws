@@ -64,7 +64,7 @@ class ProxyHandler extends WebSocketUriHandler
                 $this->requestClose($user, $message);
 
         } catch (Exception $e) {
-            $this->logger->err($e->getMessage());
+            $this->logger->error($e->getMessage());
         }
     }
 

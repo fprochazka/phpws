@@ -5,6 +5,9 @@ namespace Devristo\Phpws\RemoteEvent;
 use Devristo\Phpws\Messaging\RemoteEventMessage;
 use Devristo\Phpws\Protocol\StackTransport;
 use Devristo\Phpws\RemoteEvent\Room;
+use Psr\Log\LoggerInterface;
+
+
 
 class RemoteEvents extends \Evenement\EventEmitter
 {
@@ -14,7 +17,7 @@ class RemoteEvents extends \Evenement\EventEmitter
     protected $rooms = array();
     protected $logger;
 
-    public function __construct(\Zend\Log\LoggerInterface $logger)
+    public function __construct(LoggerInterface $logger)
     {
         $this->logger = $logger;
     }

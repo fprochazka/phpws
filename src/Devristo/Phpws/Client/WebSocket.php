@@ -11,13 +11,14 @@ use Devristo\Phpws\Protocol\Handshake;
 use Devristo\Phpws\Protocol\WebSocketTransport;
 use Devristo\Phpws\Protocol\WebSocketTransportHybi;
 use Devristo\Phpws\Protocol\WebSocketConnection;
-use Devristo\Phpws\Reflection\FullAccessWrapper;
 use Evenement\EventEmitter;
+use Psr\Log\LoggerInterface;
 use React\EventLoop\LoopInterface;
 use React\Promise\Deferred;
+use React\SocketClient\SecureConnector;
+use React\Stream\DuplexStreamInterface;
 use Zend\Http\Request;
 use Zend\Http\Response;
-use Zend\Log\LoggerInterface;
 use Zend\Uri\Uri;
 
 
@@ -54,6 +55,9 @@ class WebSocket extends EventEmitter
 
 	protected $loop;
 
+	/**
+	 * @var LoggerInterface
+	 */
 	protected $logger;
 
 	protected $isClosing = FALSE;
@@ -64,13 +68,12 @@ class WebSocket extends EventEmitter
 
 	public function __construct($url, LoopInterface $loop, LoggerInterface $logger, array $streamOptions = NULL)
 	{
-		$this->logger = $logger;
-		$this->loop = $loop;
-		$this->streamOptions = $streamOptions;
-		$parts = parse_url($url);
-
 		$this->url = $url;
+		$this->loop = $loop;
+		$this->logger = $logger;
+		$this->streamOptions = $streamOptions;
 
+		$parts = parse_url($url);
 		if (in_array($parts['scheme'], array('ws', 'wss')) === FALSE) {
 			throw new WebSocketInvalidUrlScheme();
 		}
@@ -83,11 +86,6 @@ class WebSocket extends EventEmitter
 
 	public function open($timeOut = NULL)
 	{
-		/**
-		 * @var $that self
-		 */
-		$that = new FullAccessWrapper($this);
-
 		$uri = new Uri($this->url);
 
 		$isSecured = 'wss' === $uri->getScheme();
@@ -96,66 +94,68 @@ class WebSocket extends EventEmitter
 		$connector = new Connector($this->loop, $this->dns, $this->streamOptions);
 
 		if ($isSecured) {
-			$connector = new \React\SocketClient\SecureConnector($connector, $this->loop);
+			$connector = new SecureConnector($connector, $this->loop);
 		}
 
 		$deferred = new Deferred();
 
 		$connector->create($uri->getHost(), $uri->getPort() ?: $defaultPort)
-			->then(function (\React\Stream\DuplexStreamInterface $stream) use ($that, $uri, $deferred, $timeOut) {
+			->then(function (DuplexStreamInterface $stream) use ($uri, $deferred, $timeOut) {
 
 				if ($timeOut) {
-					$timeOutTimer = $that->loop->addTimer($timeOut, function () use ($deferred, $stream, $that) {
+					$timeOutTimer = $this->loop->addTimer($timeOut, function () use ($deferred, $stream) {
 						$stream->close();
-						$that->logger->notice("Timeout occured, closing connection");
-						$that->emit("error");
+						$this->logger->notice("Timeout occured, closing connection");
+						$this->emit("error");
 						$deferred->reject("Timeout occured");
 					});
+
 				} else {
 					$timeOutTimer = NULL;
 				}
 
 				$transport = new WebSocketTransportHybi($stream);
-				$transport->setLogger($that->logger);
-				$that->transport = $transport;
-				$that->stream = $stream;
+				$transport->setLogger($this->logger);
 
-				$stream->on("close", function () use ($that) {
-					$that->isClosing = FALSE;
-					$that->state = WebSocket::STATE_CLOSED;
+				$this->transport = $transport;
+				$this->stream = $stream;
+
+				$stream->on("close", function () {
+					$this->isClosing = FALSE;
+					$this->state = WebSocket::STATE_CLOSED;
 				});
 
 				// Give the chance to change request
-				$transport->on("request", function (Request $handshake) use ($that) {
-					$that->emit("request", func_get_args());
+				$transport->on("request", function (Request $handshake) {
+					$this->emit("request", func_get_args());
 				});
 
-				$transport->on("handshake", function (Handshake $handshake) use ($that) {
-					$that->request = $handshake->getRequest();
-					$that->response = $handshake->getRequest();
+				$transport->on("handshake", function (Handshake $handshake) {
+					$this->request = $handshake->getRequest();
+					$this->response = $handshake->getRequest();
 
-					$that->emit("handshake", array($handshake));
+					$this->emit("handshake", array($handshake));
 				});
 
-				$transport->on("connect", function () use (&$state, $that, $transport, $timeOutTimer, $deferred) {
+				$transport->on("connect", function () use (&$state, $transport, $timeOutTimer, $deferred) {
 					if ($timeOutTimer) {
 						$timeOutTimer->cancel();
 					}
 
 					$deferred->resolve($transport);
-					$that->state = WebSocket::STATE_CONNECTED;
-					$that->emit("connect");
+					$this->state = WebSocket::STATE_CONNECTED;
+					$this->emit("connect");
 				});
 
-				$transport->on('message', function ($message) use ($that, $transport) {
-					$that->emit("message", array("message" => $message));
+				$transport->on('message', function ($message) use ($transport) {
+					$this->emit("message", array("message" => $message));
 				});
 
 				$transport->initiateHandshake($uri);
-				$that->state = WebSocket::STATE_HANDSHAKE_SENT;
-			}, function ($reason) use ($that, $deferred) {
+				$this->state = WebSocket::STATE_HANDSHAKE_SENT;
+			}, function ($reason) use ($this, $deferred) {
 				$deferred->reject($reason);
-				$that->logger->err($reason);
+				$this->logger->error($reason);
 			});
 
 		return $deferred->promise();

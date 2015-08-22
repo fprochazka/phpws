@@ -14,7 +14,7 @@ use Devristo\Phpws\Protocol\TransportInterface;
 use Devristo\Phpws\Protocol\WebSocketTransport;
 use Devristo\Phpws\Protocol\WebSocketTransportInterface;
 use Devristo\Phpws\Server\WebSocketServer;
-use Zend\Log\LoggerInterface;
+use Psr\Log\LoggerInterface;
 
 class ClientRouter {
     protected $handlers;
@@ -34,39 +34,39 @@ class ClientRouter {
 
         $that = $this;
 
-        $server->on("connect", function(WebSocketTransportInterface $client) use ($that, $logger, $membership){
+        $server->on("connect", function(WebSocketTransportInterface $client) use ($that, $membership){
             $handler = $that->matchConnection($client);
 
             if($handler){
-                $logger->notice("Added client {$client->getId()} to ".get_class($handler));
+                $this->logger->notice("Added client {$client->getId()} to ".get_class($handler));
                 $membership->attach($client, $handler);
                 $handler->emit("connect", array("client" => $client));
                 $handler->addConnection($client);
             }else
-                $logger->err("Cannot route {$client->getId()} with request uri {$client->getHandshakeRequest()->getUriString()}");
+                $this->logger->error("Cannot route {$client->getId()} with request uri {$client->getHandshakeRequest()->getUriString()}");
         });
 
-        $server->on('disconnect', function(WebSocketTransportInterface $client) use($that, $logger, $membership){
+        $server->on('disconnect', function(WebSocketTransportInterface $client) use($that, $membership){
             if($membership->contains($client)){
                 $handler = $membership[$client];
                 $membership->detach($client);
 
-                $logger->notice("Removed client {$client->getId()} from".get_class($handler));
+                $this->logger->notice("Removed client {$client->getId()} from".get_class($handler));
 
                 $handler->removeConnection($client);
                 $handler->emit("disconnect", array("client" => $client));
 
             } else {
-                $logger->warn("Client {$client->getId()} not attached to any handler, so cannot remove it!");
+                $this->logger->warning("Client {$client->getId()} not attached to any handler, so cannot remove it!");
             }
         });
 
-        $server->on("message", function(WebSocketTransportInterface $client, WebSocketMessageInterface $message) use($that, $logger, $membership){
+        $server->on("message", function(WebSocketTransportInterface $client, WebSocketMessageInterface $message) use($that, $membership){
             if($membership->contains($client)){
                 $handler = $membership[$client];
                 $handler->emit("message", compact('client', 'message'));
             } else {
-                $logger->warn("Client {$client->getId()} not attached to any handler, so cannot forward the message!");
+                $this->logger->warning("Client {$client->getId()} not attached to any handler, so cannot forward the message!");
             }
         });
     }
@@ -99,4 +99,4 @@ class ClientRouter {
 
         $this->handlers->attach($tester, $handler);
     }
-} 
+}

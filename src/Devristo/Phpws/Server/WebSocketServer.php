@@ -12,7 +12,7 @@ use Evenement\EventEmitter;
 use Exception;
 use React\EventLoop\LoopInterface;
 use SplObjectStorage;
-use Zend\Log\LoggerInterface;
+use Psr\Log\LoggerInterface;
 use Zend\Uri\Uri;
 
 /**
@@ -29,16 +29,16 @@ class WebSocketServer extends EventEmitter
      * The raw streams connected to the WebSocket server (whether a handshake has taken place or not)
      * @var WebSocketConnection[]|SplObjectStorage
      */
-    protected $_streams;
+    protected $streams;
 
     /**
      * The connected clients to the WebSocket server, a valid handshake has been performed.
      * @var \SplObjectStorage|WebSocketTransportInterface[]
      */
-    protected $_connections = array();
+    protected $connections = array();
 
     protected $purgeUserTimeOut = null;
-    protected $_context = null;
+    protected $context = null;
 
     /**
      *
@@ -61,7 +61,7 @@ class WebSocketServer extends EventEmitter
      *
      * @param $url
      * @param \React\EventLoop\LoopInterface $loop
-     * @param \Zend\Log\LoggerInterface $logger
+     * @param LoggerInterface $logger
      * @throws \InvalidArgumentException
      */
     public function __construct($url, LoopInterface $loop, LoggerInterface $logger)
@@ -79,21 +79,21 @@ class WebSocketServer extends EventEmitter
         $this->uri = $uri;
 
         $this->loop = $loop;
-        $this->_streams = new SplObjectStorage();
-        $this->_connections = new SplObjectStorage();
+        $this->streams = new SplObjectStorage();
+        $this->connections = new SplObjectStorage();
 
-        $this->_context = stream_context_create();
-        $this->_logger = $logger;
+        $this->context = stream_context_create();
+        $this->logger = $logger;
     }
 
     public function getStreamContext()
     {
-        return $this->_context;
+        return $this->context;
     }
 
     public function setStreamContext($context)
     {
-        $this->_context = $context;
+        $this->context = $context;
     }
 
     /**
@@ -101,26 +101,24 @@ class WebSocketServer extends EventEmitter
      */
     public function bind()
     {
-
         $err = $errno = 0;
 
         $this->FLASH_POLICY_FILE = str_replace('to-ports="*', 'to-ports="' . $this->uri->getPort() ?: 80, $this->FLASH_POLICY_FILE);
 
-        $serverSocket = stream_socket_server($this->uri->toString(), $errno, $err, STREAM_SERVER_BIND | STREAM_SERVER_LISTEN, $this->_context);
+        $serverSocket = stream_socket_server($this->uri->toString(), $errno, $err, STREAM_SERVER_BIND | STREAM_SERVER_LISTEN, $this->context);
 
-        $this->_logger->notice(sprintf("phpws listening on %s", $this->uri->toString()));
+        $this->logger->notice(sprintf("phpws listening on %s", $this->uri->toString()));
 
         if ($serverSocket == false) {
-            $this->_logger->err("Error: $err");
+            $this->logger->error("$err");
             return;
         }
 
         $timeOut = & $this->purgeUserTimeOut;
-        $sockets = $this->_streams;
+        $sockets = $this->streams;
         $that = $this;
-        $logger = $this->_logger;
 
-        $this->loop->addReadStream($serverSocket, function ($serverSocket) use ($that, $logger, $sockets) {
+        $this->loop->addReadStream($serverSocket, function ($serverSocket) use ($that, $sockets) {
             $newSocket = stream_socket_accept($serverSocket);
 
             if (false === $newSocket) {
@@ -128,25 +126,25 @@ class WebSocketServer extends EventEmitter
             }
 
             stream_set_blocking($newSocket, 0);
-            $client = new WebSocketConnection($newSocket, $that->loop, $logger);
+            $client = new WebSocketConnection($newSocket, $that->loop, $this->logger);
             $sockets->attach($client);
 
             $client->on("handshake", function(Handshake $request) use($that, $client){
                 $that->emit("handshake",array($client->getTransport(), $request));
             });
 
-            $client->on("connect", function () use ($that, $client, $logger) {
+            $client->on("connect", function () use ($that, $client) {
                 $con = $client->getTransport();
                 $that->getConnections()->attach($con);
                 $that->emit("connect", array("client" => $con));
             });
 
-            $client->on("message", function ($message) use ($that, $client, $logger) {
+            $client->on("message", function ($message) use ($that, $client) {
                 $connection = $client->getTransport();
                 $that->emit("message", array("client" => $connection, "message" => $message));
             });
 
-            $client->on("close", function () use ($that, $client, $logger, &$sockets, $client) {
+            $client->on("close", function () use ($that, $client, &$sockets, $client) {
                 $sockets->detach($client);
                 $connection = $client->getTransport();
 
@@ -184,7 +182,7 @@ class WebSocketServer extends EventEmitter
 
     public function getConnections()
     {
-        return $this->_connections;
+        return $this->connections;
     }
 }
 

@@ -14,7 +14,7 @@ use Devristo\Phpws\Protocol\TransportInterface;
 use Evenement\EventEmitter;
 use React\EventLoop\LoopInterface;
 use React\Promise\Deferred;
-use Zend\Log\LoggerInterface;
+use Psr\Log\LoggerInterface;
 
 class RemoteEventTransport extends EventEmitter implements TransportInterface{
     /**
@@ -68,7 +68,7 @@ class RemoteEventTransport extends EventEmitter implements TransportInterface{
                     $that->emit("message", array($jsonMessage));
 
             }catch(\Exception $e){
-                $logger->err("Exception while parsing JsonMessage: ".$e->getMessage());
+                $logger->error("Exception while parsing JsonMessage: ".$e->getMessage());
             }
         });
     }
@@ -99,11 +99,10 @@ class RemoteEventTransport extends EventEmitter implements TransportInterface{
 
         if($timeout){
             $list = &$this->deferred;
-            $logger = $this->logger;
 
-            $this->timers[$tag] = $this->loop->addTimer($timeout, function() use($deferred, &$list, $tag, $logger){
+            $this->timers[$tag] = $this->loop->addTimer($timeout, function() use($deferred, &$list, $tag){
                 unset($list[$tag]);
-                $logger->debug("Request with tag $tag has timed out");
+                $this->logger->debug("Request with tag $tag has timed out");
                 $deferred->reject("Timeout occurred");
             });
         }

@@ -14,10 +14,9 @@ use Evenement\EventEmitter;
 use React\Stream\WritableStreamInterface;
 use Zend\Http\Request;
 use Zend\Http\Response;
-use Zend\Log\LoggerAwareInterface;
-use Zend\Log\LoggerInterface;
+use Psr\Log\LoggerInterface;
 
-abstract class WebSocketTransport extends EventEmitter implements WebSocketTransportInterface, LoggerAwareInterface
+abstract class WebSocketTransport extends EventEmitter implements WebSocketTransportInterface
 {
     /**
      * @var LoggerInterface

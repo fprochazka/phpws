@@ -7,7 +7,7 @@ use Devristo\Phpws\Protocol\WebSocketTransportInterface;
 use Devristo\Phpws\Server\WebSocketServer;
 use Evenement\EventEmitter;
 use SplObjectStorage;
-use Zend\Log\LoggerInterface;
+use Psr\Log\LoggerInterface;
 
 class WebSocketUriHandler extends EventEmitter implements WebSocketUriHandlerInterface
 {
@@ -31,7 +31,7 @@ class WebSocketUriHandler extends EventEmitter implements WebSocketUriHandlerInt
      */
     protected $logger;
 
-    public function __construct($logger)
+    public function __construct(LoggerInterface $logger)
     {
         $this->users = new SplObjectStorage();
         $this->logger = $logger;
