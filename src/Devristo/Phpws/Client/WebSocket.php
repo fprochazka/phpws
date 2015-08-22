@@ -99,7 +99,6 @@ class WebSocket extends EventEmitter
 
 		$connector->create($uri->getHost(), $uri->getPort() ?: $defaultPort)
 			->then(function (DuplexStreamInterface $stream) use ($uri, $deferred, $timeOut) {
-
 				if ($timeOut) {
 					$timeOutTimer = $this->loop->addTimer($timeOut, function () use ($deferred, $stream) {
 						$stream->close();
@@ -107,6 +106,7 @@ class WebSocket extends EventEmitter
 						$this->emit("error");
 						$deferred->reject("Timeout occured");
 					});
+
 				} else {
 					$timeOutTimer = NULL;
 				}
@@ -150,7 +150,8 @@ class WebSocket extends EventEmitter
 
 				$transport->initiateHandshake($uri);
 				$this->state = WebSocket::STATE_HANDSHAKE_SENT;
-			}, function ($reason) use ($this, $deferred) {
+
+			}, function ($reason) use ($deferred) {
 				$deferred->reject($reason);
 				$this->logger->error($reason);
 			});

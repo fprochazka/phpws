@@ -77,6 +77,7 @@ class WebSocketTransportHybi extends WebSocketTransport
 
 			if ($handshakeRequest->isAborted()) {
 				$this->close();
+
 			} else {
 				$this->socket->write($response->toString());
 				$this->logger->debug("Got an HYBI style request, sent HYBY handshake response");
@@ -84,6 +85,7 @@ class WebSocketTransportHybi extends WebSocketTransport
 				$this->connected = TRUE;
 				$this->emit("connect");
 			}
+
 		} catch (Exception $e) {
 			$this->logger->error("Connection error, message: " . $e->getMessage());
 			$this->close();
@@ -247,11 +249,12 @@ class WebSocketTransportHybi extends WebSocketTransport
 
 		$request->setUri($requestUri);
 
-		$request->getHeaders()->addHeaderLine("Connection", "Upgrade");
-		$request->getHeaders()->addHeaderLine("Host", $uri->getHost());
-		$request->getHeaders()->addHeaderLine("Sec-WebSocket-Key", $challenge);
-		$request->getHeaders()->addHeaderLine("Sec-WebSocket-Version", 13);
-		$request->getHeaders()->addHeaderLine("Upgrade", "websocket");
+		$request->getHeaders()
+			->addHeaderLine("Connection", "Upgrade")
+			->addHeaderLine("Host", $uri->getHost())
+			->addHeaderLine("Sec-WebSocket-Key", $challenge)
+			->addHeaderLine("Sec-WebSocket-Version", 13)
+			->addHeaderLine("Upgrade", "websocket");
 
 		$this->setRequest($request);
 
