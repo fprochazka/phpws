@@ -31,52 +31,47 @@ class WebSocket extends EventEmitter
 	const STATE_CLOSING = 2;
 	const STATE_CLOSED = 3;
 
-	protected $state = self::STATE_CLOSED;
-
-	protected $url;
+	private $state = self::STATE_CLOSED;
 
 	/**
 	 * @var WebSocketConnection
 	 */
-	protected $stream;
-
-	protected $socket;
-
-	protected $request;
-
-	protected $response;
-
-	/**
-	 * @var WebSocketTransport
-	 */
-	protected $transport = NULL;
-
-	protected $headers;
-
-	protected $loop;
+	private $stream;
 
 	/**
 	 * @var LoggerInterface
 	 */
-	protected $logger;
+	private $logger;
 
-	protected $isClosing = FALSE;
+	/**
+	 * @var LoopInterface
+	 */
+	private $loop;
 
-	protected $streamOptions = NULL;
+	/**
+	 * @var WebSocketTransport
+	 */
+	private $transport = NULL;
+
+	private $socket;
+
+	private $request;
+
+	private $response;
+
+	private $headers;
+
+	private $isClosing = FALSE;
+
+	private $streamOptions = NULL;
 
 
 
-	public function __construct($url, LoopInterface $loop, LoggerInterface $logger, array $streamOptions = NULL)
+	public function __construct(LoopInterface $loop, LoggerInterface $logger, array $streamOptions = NULL)
 	{
-		$this->url = $url;
 		$this->loop = $loop;
 		$this->logger = $logger;
 		$this->streamOptions = $streamOptions;
-
-		$parts = parse_url($url);
-		if (in_array($parts['scheme'], array('ws', 'wss')) === FALSE) {
-			throw new WebSocketInvalidUrlScheme();
-		}
 
 		$dnsResolverFactory = new \React\Dns\Resolver\Factory();
 		$this->dns = $dnsResolverFactory->createCached('8.8.8.8', $loop);
@@ -84,9 +79,12 @@ class WebSocket extends EventEmitter
 
 
 
-	public function open($timeOut = NULL)
+	public function open($url, $timeOut = NULL)
 	{
-		$uri = new Uri($this->url);
+		$uri = new Uri($url);
+		if (!in_array($uri->getScheme(), ['ws', 'wss'], TRUE)) {
+			throw new WebSocketInvalidUrlScheme();
+		}
 
 		$isSecured = 'wss' === $uri->getScheme();
 		$defaultPort = $isSecured ? 443 : 80;
