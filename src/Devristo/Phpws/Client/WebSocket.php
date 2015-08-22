@@ -109,7 +109,6 @@ class WebSocket extends EventEmitter
 						$this->emit("error");
 						$deferred->reject("Timeout occured");
 					});
-
 				} else {
 					$timeOutTimer = NULL;
 				}

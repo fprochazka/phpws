@@ -12,30 +12,31 @@ use React\Socket\ConnectionInterface;
 use Zend\Http\Request;
 use Psr\Log\LoggerInterface;
 
+
+
 class WebSocketTransportFactory
 {
 
-    public static function fromSocketData(ConnectionInterface $socket, $data, LoggerInterface $logger)
-    {
-        // Check whether we have a Adobe Flash Policy file Request
-        if(strpos($data, '<policy-file-request/>') === 0){
-            $s = new WebSocketTransportFlash($socket, $data);
-            $s->setLogger($logger);
+	public static function fromSocketData(ConnectionInterface $socket, $data, LoggerInterface $logger)
+	{
+		// Check whether we have a Adobe Flash Policy file Request
+		if (strpos($data, '<policy-file-request/>') === 0) {
+			$s = new WebSocketTransportFlash($socket, $data);
+			$s->setLogger($logger);
 
-            return $s;
-        }
+			return $s;
+		}
 
-        $request = Request::fromString($data);
+		$request = Request::fromString($data);
 
-        if ($request->getHeader('Sec-Websocket-Key1')) {
-            $s = new WebSocketTransportHixie($socket, $request, $data);
-            $s->setLogger($logger);
-        } else{
-            $s = new WebSocketTransportHybi($socket, $request);
-            $s->setLogger($logger);
-        }
+		if ($request->getHeader('Sec-Websocket-Key1')) {
+			$s = new WebSocketTransportHixie($socket, $request, $data);
+			$s->setLogger($logger);
+		} else {
+			$s = new WebSocketTransportHybi($socket, $request);
+			$s->setLogger($logger);
+		}
 
-
-        return $s;
-    }
+		return $s;
+	}
 }

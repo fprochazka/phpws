@@ -9,68 +9,82 @@ use Evenement\EventEmitter;
 use SplObjectStorage;
 use Psr\Log\LoggerInterface;
 
+
+
 class WebSocketUriHandler extends EventEmitter implements WebSocketUriHandlerInterface
 {
 
-    /**
-     *
-     * Enter description here ...
-     * @var SplObjectStorage
-     */
-    protected $users;
+	/**
+	 * Enter description here ...
+	 *
+	 * @var SplObjectStorage
+	 */
+	protected $users;
 
-    /**
-     *
-     * Enter description here ...
-     * @var WebSocketServer
-     */
-    protected $server;
+	/**
+	 * Enter description here ...
+	 *
+	 * @var WebSocketServer
+	 */
+	protected $server;
 
-    /**
-     * @var LoggerInterface
-     */
-    protected $logger;
+	/**
+	 * @var LoggerInterface
+	 */
+	protected $logger;
 
-    public function __construct(LoggerInterface $logger)
-    {
-        $this->users = new SplObjectStorage();
-        $this->logger = $logger;
 
-        $this->on("message", array($this, 'onMessage'));
-        $this->on("disconnect", array($this, 'onDisconnect'));
-        $this->on("connect", array($this, 'onConnect'));
-    }
 
-    public function addConnection(WebSocketTransportInterface $user)
-    {
-        $this->users->attach($user);
-    }
+	public function __construct(LoggerInterface $logger)
+	{
+		$this->users = new SplObjectStorage();
+		$this->logger = $logger;
 
-    public function removeConnection(WebSocketTransportInterface $user)
-    {
-        $this->users->detach($user);
-    }
+		$this->on("message", array($this, 'onMessage'));
+		$this->on("disconnect", array($this, 'onDisconnect'));
+		$this->on("connect", array($this, 'onConnect'));
+	}
 
-    public function onDisconnect(WebSocketTransportInterface $user)
-    {
 
-    }
 
-    public function onConnect(WebSocketTransportInterface $user){
+	public function addConnection(WebSocketTransportInterface $user)
+	{
+		$this->users->attach($user);
+	}
 
-    }
 
-    public function onMessage(WebSocketTransportInterface $user, WebSocketMessageInterface $msg)
-    {
 
-    }
+	public function removeConnection(WebSocketTransportInterface $user)
+	{
+		$this->users->detach($user);
+	}
 
-    /**
-     * @return \Devristo\Phpws\Protocol\WebSocketTransportInterface[]|SplObjectStorage
-     */
-    public function getConnections()
-    {
-        return $this->users;
-    }
+
+
+	public function onDisconnect(WebSocketTransportInterface $user)
+	{
+	}
+
+
+
+	public function onConnect(WebSocketTransportInterface $user)
+	{
+	}
+
+
+
+	public function onMessage(WebSocketTransportInterface $user, WebSocketMessageInterface $msg)
+	{
+	}
+
+
+
+	/**
+	 * @return \Devristo\Phpws\Protocol\WebSocketTransportInterface[]|SplObjectStorage
+	 */
+	public function getConnections()
+	{
+		return $this->users;
+	}
 
 }

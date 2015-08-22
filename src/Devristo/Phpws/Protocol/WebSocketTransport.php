@@ -16,113 +16,151 @@ use Zend\Http\Request;
 use Zend\Http\Response;
 use Psr\Log\LoggerInterface;
 
+
+
 abstract class WebSocketTransport extends EventEmitter implements WebSocketTransportInterface
 {
-    /**
-     * @var LoggerInterface
-     */
-    protected $logger;
 
-    /**
-     * @var Request
-     */
-    protected $request;
+	/**
+	 * @var LoggerInterface
+	 */
+	protected $logger;
 
-    /**
-     * @var Response
-     */
-    protected $response;
+	/**
+	 * @var Request
+	 */
+	protected $request;
 
-    /**
-     *
-     * @var WebSocketConnection
-     */
-    protected $_socket = null;
-    protected $_cookies = array();
-    public $parameters = null;
-    protected $_role = WebsocketTransportRole::CLIENT;
+	/**
+	 * @var Response
+	 */
+	protected $response;
 
-    protected $_eventManger;
+	/**
+	 * @var WebSocketConnection
+	 */
+	protected $socket = NULL;
 
-    protected $data = array();
+	protected $cookies = array();
 
-    public function __construct(WritableStreamInterface $socket)
-    {
-        $this->_socket = $socket;
-        $this->_id = uniqid("connection-");
+	public $parameters = NULL;
 
-        $that = $this;
+	protected $role = WebsocketTransportRole::CLIENT;
 
-        $buffer = '';
+	protected $data = array();
 
-        $socket->on("data", function($data) use ($that, &$buffer){
-            $buffer .= $data;
-            $that->handleData($buffer);
-        });
 
-        $socket->on("close", function($data) use ($that){
-            $that->emit("close", func_get_args());
-        });
-    }
 
-    public function getIp()
-    {
-        return $this->_socket->getRemoteAddress();
-    }
+	public function __construct(WritableStreamInterface $socket)
+	{
+		$this->socket = $socket;
+		$this->_id = uniqid("connection-");
 
-    public function getId()
-    {
-        return $this->_id;
-    }
+		$that = $this;
 
-    protected function setRequest(Request $request){
-        $this->request = $request;
-    }
+		$buffer = '';
 
-    protected function setResponse(Response $response){
-        $this->response = $response;
-    }
+		$socket->on("data", function ($data) use ($that, &$buffer) {
+			$buffer .= $data;
+			$that->handleData($buffer);
+		});
 
-    public function getHandshakeRequest(){
-        return $this->request;
-    }
+		$socket->on("close", function ($data) use ($that) {
+			$that->emit("close", func_get_args());
+		});
+	}
 
-    public function getHandshakeResponse(){
-        return $this->response;
-    }
 
-    public function getSocket()
-    {
-        return $this->_socket;
-    }
 
-    public function setLogger(LoggerInterface $logger){
-        $this->logger = $logger;
-    }
+	public function getIp()
+	{
+		return $this->socket->getRemoteAddress();
+	}
 
-    public function sendFrame(WebSocketFrameInterface $frame)
-    {
-        if ($this->_socket->write($frame->encode()) === false)
-            return false;
 
-        return true;
-    }
 
-    public function sendMessage(WebSocketMessageInterface $msg)
-    {
-        foreach ($msg->getFrames() as $frame) {
-            if ($this->sendFrame($frame) === false)
-                return false;
-        }
+	public function getId()
+	{
+		return $this->_id;
+	}
 
-        return true;
-    }
 
-    public function setData($key, $value){
-        $this->data[$key] = $value;
-    }
 
-    public function getData($key){
-        return $this->data[$key];
-    }
+	protected function setRequest(Request $request)
+	{
+		$this->request = $request;
+	}
+
+
+
+	protected function setResponse(Response $response)
+	{
+		$this->response = $response;
+	}
+
+
+
+	public function getHandshakeRequest()
+	{
+		return $this->request;
+	}
+
+
+
+	public function getHandshakeResponse()
+	{
+		return $this->response;
+	}
+
+
+
+	public function getSocket()
+	{
+		return $this->socket;
+	}
+
+
+
+	public function setLogger(LoggerInterface $logger)
+	{
+		$this->logger = $logger;
+	}
+
+
+
+	public function sendFrame(WebSocketFrameInterface $frame)
+	{
+		if ($this->socket->write($frame->encode()) === FALSE) {
+			return FALSE;
+		}
+
+		return TRUE;
+	}
+
+
+
+	public function sendMessage(WebSocketMessageInterface $msg)
+	{
+		foreach ($msg->getFrames() as $frame) {
+			if ($this->sendFrame($frame) === FALSE) {
+				return FALSE;
+			}
+		}
+
+		return TRUE;
+	}
+
+
+
+	public function setData($key, $value)
+	{
+		$this->data[$key] = $value;
+	}
+
+
+
+	public function getData($key)
+	{
+		return $this->data[$key];
+	}
 }

@@ -8,33 +8,53 @@
 
 namespace Devristo\Phpws\Protocol;
 
-
 use Zend\Http\Request;
 use Zend\Http\Response;
 
-class Handshake {
-    protected $abort = false;
-    protected $request;
-    protected $response;
 
-    public function __construct(Request $request, Response $response){
-        $this->request = $request;
-        $this->response = $response;
-    }
 
-    public function getRequest(){
-        return $this->request;
-    }
+class Handshake
+{
 
-    public function getResponse(){
-        return $this->response;
-    }
+	protected $abort = FALSE;
 
-    public function abort(){
-        $this->abort = true;
-    }
+	protected $request;
 
-    public function isAborted(){
-        return $this->abort;
-    }
-} 
+	protected $response;
+
+
+
+	public function __construct(Request $request, Response $response)
+	{
+		$this->request = $request;
+		$this->response = $response;
+	}
+
+
+
+	public function getRequest()
+	{
+		return $this->request;
+	}
+
+
+
+	public function getResponse()
+	{
+		return $this->response;
+	}
+
+
+
+	public function abort()
+	{
+		$this->abort = TRUE;
+	}
+
+
+
+	public function isAborted()
+	{
+		return $this->abort;
+	}
+}

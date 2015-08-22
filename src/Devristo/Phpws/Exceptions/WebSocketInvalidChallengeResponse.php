@@ -10,12 +10,14 @@ namespace Devristo\Phpws\Exceptions;
 
 use Exception;
 
+
+
 class WebSocketInvalidChallengeResponse extends Exception
 {
 
-    public function __construct()
-    {
-        parent::__construct("Server send an incorrect response to the clients challenge!");
-    }
+	public function __construct()
+	{
+		parent::__construct("Server send an incorrect response to the clients challenge!");
+	}
 
 }

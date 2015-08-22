@@ -11,12 +11,14 @@ namespace Devristo\Phpws\Exceptions;
 use Devristo\Phpws\Framing\WebSocketFrameInterface;
 use Exception;
 
+
+
 class WebSocketFrameSizeMismatch extends Exception
 {
 
-    public function __construct(WebSocketFrameInterface $msg)
-    {
-        parent::__construct("Frame size mismatches with the expected frame size. Maybe a buggy client.");
-    }
+	public function __construct(WebSocketFrameInterface $msg)
+	{
+		parent::__construct("Frame size mismatches with the expected frame size. Maybe a buggy client.");
+	}
 
 }

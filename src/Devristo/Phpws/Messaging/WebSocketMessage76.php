@@ -7,9 +7,12 @@
  * To change this template use File | Settings | File Templates.
  */
 namespace Devristo\Phpws\Messaging;
+
 use Devristo\Phpws\Framing\WebSocketFrameInterface;
 use Devristo\Phpws\Framing\WebSocketFrame76;
 use Devristo\Phpws\Framing\WebSocketOpcode;
+
+
 
 /**
  * WebSocketMessage compatible with the Hixie Draft #76
@@ -21,58 +24,70 @@ use Devristo\Phpws\Framing\WebSocketOpcode;
 class WebSocketMessage76 implements WebSocketMessageInterface
 {
 
-    protected $data = '';
+	protected $data = '';
 
-    /**
-     * @var WebSocketFrame76
-     */
-    protected $frame = null;
+	/**
+	 * @var WebSocketFrame76
+	 */
+	protected $frame = NULL;
 
-    public static function create($data)
-    {
-        $o = new self();
 
-        $o->setData($data);
-        return $o;
-    }
 
-    public function getFrames()
-    {
-        $arr = array();
+	public static function create($data)
+	{
+		$o = new self();
 
-        $arr[] = $this->frame;
+		$o->setData($data);
+		return $o;
+	}
 
-        return $arr;
-    }
 
-    public function setData($data)
-    {
-        $this->data = $data;
-        $this->frame = WebSocketFrame76::create(WebSocketOpcode::TextFrame, $data);
-    }
 
-    public function getData()
-    {
-        return $this->frame->getData();
-    }
+	public function getFrames()
+	{
+		$arr = array();
 
-    public function isFinalised()
-    {
-        return true;
-    }
+		$arr[] = $this->frame;
 
-    /**
-     * Creates a new WebSocketMessage76 from a IWebSocketFrame
-     * @param WebSocketFrameInterface $frame
-     *
-     * @return \Devristo\Phpws\Messaging\WebSocketMessage76 Message composed of the frame provided
-     */
-    public static function fromFrame(WebSocketFrameInterface $frame)
-    {
-        $o = new self();
-        $o->frame = $frame;
+		return $arr;
+	}
 
-        return $o;
-    }
+
+
+	public function setData($data)
+	{
+		$this->data = $data;
+		$this->frame = WebSocketFrame76::create(WebSocketOpcode::TextFrame, $data);
+	}
+
+
+
+	public function getData()
+	{
+		return $this->frame->getData();
+	}
+
+
+
+	public function isFinalised()
+	{
+		return TRUE;
+	}
+
+
+
+	/**
+	 * Creates a new WebSocketMessage76 from a IWebSocketFrame
+	 *
+	 * @param WebSocketFrameInterface $frame
+	 * @return \Devristo\Phpws\Messaging\WebSocketMessage76 Message composed of the frame provided
+	 */
+	public static function fromFrame(WebSocketFrameInterface $frame)
+	{
+		$o = new self();
+		$o->frame = $frame;
+
+		return $o;
+	}
 
 }

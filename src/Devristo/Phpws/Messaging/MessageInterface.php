@@ -8,7 +8,8 @@
 
 namespace Devristo\Phpws\Messaging;
 
+interface MessageInterface
+{
 
-interface MessageInterface {
-    public function getData();
-} 
+	public function getData();
+}
